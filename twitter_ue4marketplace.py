@@ -49,7 +49,7 @@ def check_for_new_packages():
 
     parser.feed(r.read().decode())
     try:
-    idx = parser.packages.index(latest_package)
+        idx = parser.packages.index(latest_package)
     except ValueError:
         api.destroy_status(latest_tweet.id)
         raise Exception(f"{latest_package} not in marketplace, deleting tweet")
@@ -57,7 +57,7 @@ def check_for_new_packages():
     new_packages.reverse()
     for package in new_packages:
         log.info(package)
-        api.update_status(package)
+        api.update_status(f"#unreal #ue4 #marketplace {package}")
 
 
 def main():
