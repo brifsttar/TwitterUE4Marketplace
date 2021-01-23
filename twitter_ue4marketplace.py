@@ -48,7 +48,11 @@ def check_for_new_packages():
     r = urllib.request.urlopen(marketplace_url)
 
     parser.feed(r.read().decode())
+    try:
     idx = parser.packages.index(latest_package)
+    except ValueError:
+        api.destroy_status(latest_tweet.id)
+        raise Exception(f"{latest_package} not in marketplace, deleting tweet")
     new_packages = parser.packages[:idx]
     new_packages.reverse()
     for package in new_packages:
