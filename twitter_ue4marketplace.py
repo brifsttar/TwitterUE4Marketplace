@@ -1,37 +1,12 @@
-from html.parser import HTMLParser
 from time import sleep
-import urllib.request
 import logging as log
 
+import requests
 import tweepy
 
 from tokens import *
 
 LOG_FORMAT = '%(asctime)-15s [%(levelname)-8s]: %(message)s'
-unreal_url = "https://www.unrealengine.com"
-
-
-class MarketplaceParser(HTMLParser):
-
-    def __init__(self):
-        HTMLParser.__init__(self)
-        self.packages = []
-
-    def handle_starttag(self, tag, attrs):
-        if tag == 'a':
-            if len(attrs) != 2:
-                return
-            class_, name = attrs[0]
-            href_, link = attrs[1]
-            if class_ != 'class':
-                return
-            if "ellipsis-text" not in name:
-                return
-            if href_ != 'href':
-                return
-            if not link.startswith("/marketplace/en-US/product/"):
-                return
-            self.packages.append(unreal_url + link)
 
 
 def check_for_new_packages():
@@ -42,18 +17,20 @@ def check_for_new_packages():
     latest_tweet = api.user_timeline(id=api.me().id, count=1)[0]
     latest_package = latest_tweet.entities['urls'][0]['expanded_url']
 
-    parser = MarketplaceParser()
+    new_packages = [] 
+    payload = {'sortBy': 'effectiveDate', 'count': 100}
+    r = requests.get('https://www.unrealengine.com/marketplace/api/assets', params=payload)
+    j  = r.json()
+    for e in j['data']['elements']:
+        new_packages.append(f"https://www.unrealengine.com/marketplace/en-US/product/{e['urlSlug']}")
 
-    marketplace_url = "{unreal_url}/marketplace/en-US/new-content?count=100".format(unreal_url=unreal_url)
-    r = urllib.request.urlopen(marketplace_url)
-
-    parser.feed(r.read().decode())
     try:
-        idx = parser.packages.index(latest_package)
+        idx = new_packages.index(latest_package)
     except ValueError:
         api.destroy_status(latest_tweet.id)
         raise Exception(f"{latest_package} not in marketplace, deleting tweet")
-    new_packages = parser.packages[:idx]
+
+    new_packages = new_packages[:idx]
     new_packages.reverse()
     for package in new_packages:
         log.info(package)
@@ -73,4 +50,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
