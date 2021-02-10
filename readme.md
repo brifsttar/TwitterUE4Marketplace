@@ -2,4 +2,4 @@
 
 Bot that tweets for each new package added to the Unreal Engine Marketplace (https://www.unrealengine.com/marketplace/)
 
-https://twitter.com/unrealmarketpl1
+https://twitter.com/UnrealMarket
