@@ -17,12 +17,17 @@ def check_for_new_packages():
     latest_tweet = api.user_timeline(id=api.me().id, count=1)[0]
     latest_package = latest_tweet.entities['urls'][0]['expanded_url']
 
-    new_packages = [] 
+    new_packages = []
+    free_packages = []
     payload = {'sortBy': 'effectiveDate', 'count': 100}
     r = requests.get('https://www.unrealengine.com/marketplace/api/assets', params=payload)
     j  = r.json()
+    
     for e in j['data']['elements']:
-        new_packages.append(f"https://www.unrealengine.com/marketplace/en-US/product/{e['urlSlug']}")
+        asset_url = f"https://www.unrealengine.com/marketplace/en-US/product/{e['urlSlug']}"
+        new_packages.append(asset_url)
+        if e['priceValue'] == 0:
+            free_packages.append(asset_url)
 
     try:
         idx = new_packages.index(latest_package)
@@ -34,7 +39,11 @@ def check_for_new_packages():
     new_packages.reverse()
     for package in new_packages:
         log.info(package)
-        api.update_status(f"#unreal #ue4 #marketplace {package}")
+        msg = ""
+        if package in free_packages:
+            msg += "FREE new content! "
+        msg += f"#unreal #ue4 #marketplace {package}"
+        api.update_status(msg)
 
 
 def main():
