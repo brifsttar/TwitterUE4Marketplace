@@ -14,8 +14,16 @@ def check_for_new_packages():
     auth.set_access_token(access_token, access_token_secret)
     api = tweepy.API(auth)
 
-    latest_tweet = api.user_timeline(id=api.me().id, count=1)[0]
-    latest_package = latest_tweet.entities['urls'][0]['expanded_url']
+    tweets = api.user_timeline(id=api.me().id)
+    for tweet in tweets:
+        if tweet.source:
+            # Sometimes I manually retweet stuff, so I filter out those by checking tweet source
+            # (bot tweets have none)
+            continue
+        latest_package = tweet.entities['urls'][0]['expanded_url']
+        break
+    else:
+        raise Exception(f"Couldn't find any packages in timeline")
 
     new_packages = []
     free_packages = []
@@ -32,8 +40,8 @@ def check_for_new_packages():
     try:
         idx = new_packages.index(latest_package)
     except ValueError:
-        api.destroy_status(latest_tweet.id)
-        raise Exception(f"{latest_package} not in marketplace, deleting tweet")
+        api.destroy_status(tweet.id)
+        raise Exception(f"{latest_package} not in marketplace anymore, deleting tweet")
 
     new_packages = new_packages[:idx]
     new_packages.reverse()
