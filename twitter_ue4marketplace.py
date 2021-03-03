@@ -35,6 +35,9 @@ def check_for_new_packages():
         asset_url = f"https://www.unrealengine.com/marketplace/en-US/product/{e['urlSlug']}"
         new_packages.append(asset_url)
         if e['priceValue'] == 0:
+            if (attr := e.get("customAttributes", None)) and 'BuyLink' in attr:
+                # Some products are tagged as free, but they're really external products
+                continue
             free_packages.append(asset_url)
 
     try:
