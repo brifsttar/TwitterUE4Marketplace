@@ -9,22 +9,49 @@ from tokens import *
 LOG_FORMAT = '%(asctime)-15s [%(levelname)-8s]: %(message)s'
 
 
-def check_for_new_packages():
+def login():
     auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
     auth.set_access_token(access_token, access_token_secret)
-    api = tweepy.API(auth)
+    return tweepy.API(auth)
+
+def check_for_official_tweets():
+    api = login()
+
+    # Retweet any Tweet from @UnrealEngine that has "marketplace" in its link
+    # Includes "Free for the Month", sales, new Epic releases, etc.
+    for tweet in tweepy.Cursor(api.user_timeline, 
+                        screen_name="UnrealEngine", 
+                        count=None,
+                        since_id=None,
+                        max_id=None,
+                        trim_user=True,
+                        exclude_replies=True,
+                        contributor_details=False,
+                        include_entities=True,
+                        include_rts=False,
+                        tweet_mode="extended"
+                        ).items(3):
+        try:
+            if "marketplace" in tweet.entities['urls'][0]['expanded_url'].lower():
+                if not tweet.retweeted:
+                    api.retweet(tweet.id)
+                break
+        except IndexError:
+            pass
+
+def check_for_new_packages():
+    api = login()
 
     tweets = api.user_timeline(id=api.me().id)
     for tweet in tweets:
-        if tweet.source:
-            # Sometimes I manually retweet stuff, so I filter out those by checking tweet source
-            # (bot tweets have none)
+        if hasattr(tweet, "retweeted_status"):
+            # Ignore auto-retweets
             continue
         latest_package = tweet.entities['urls'][0]['expanded_url']
         break
     else:
         raise Exception(f"Couldn't find any packages in timeline")
-
+    
     new_packages = []
     free_packages = []
     payload = {'sortBy': 'effectiveDate', 'count': 100}
@@ -63,6 +90,7 @@ def main():
     while True:
         try:
             check_for_new_packages()
+            check_for_official_tweets()
         except Exception as e:
             log.error(e)
         sleep(60)
