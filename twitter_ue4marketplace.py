@@ -80,7 +80,7 @@ def check_for_new_packages():
         msg = ""
         if package in free_packages:
             msg += "FREE new content! "
-        msg += f"#unreal #ue4 #marketplace {package}"
+        msg += f"#UnrealEngine #UE5 {package}"
         api.update_status(msg)
 
 
