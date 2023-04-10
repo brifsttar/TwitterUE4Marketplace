@@ -1,8 +1,6 @@
-from time import sleep
 import logging as log
 from collections import deque
 import pickle
-import functools
 
 import requests
 import tweepy
@@ -17,10 +15,11 @@ class UnrealMarketBot:
     PRODUCT_REQ_COUNT = 100
 
     def __int__(self):
+        # Circular buffer with the latest known products, used to check Marketplace API and discover new releases
         self.latests = None
 
     def _pickled(func):
-        @functools.wraps(func)
+        """Decorator to load/dump pickle data around a function call"""
         def inner(self):
             try:
                 with open(self.LATEST_PRODUCT_FILE, 'rb') as f:
@@ -100,15 +99,11 @@ def main():
         format='%(asctime)-15s [%(levelname)-8s]: %(message)s',
         level=log.INFO
     )
-
-    while True:
-        try:
-            u = UnrealMarketBot()
-            u.check_for_new_products()
-        except Exception as e:
-            raise
-            # log.error(e)
-        sleep(60)
+    try:
+        u = UnrealMarketBot()
+        u.check_for_new_products()
+    except Exception as e:
+        log.error(e)
 
 
 if __name__ == '__main__':
