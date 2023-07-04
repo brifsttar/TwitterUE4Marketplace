@@ -66,13 +66,14 @@ class UnrealMarketBot:
             [self.latests.appendleft(x) for x in reversed(products_new)]
 
         # Finding the last known product in the list of new products
-        while True:
+        idx = 0
+        while idx < self.DEQUEUE_LEN:
             try:
-                latest = self.latests[0]
+                latest = self.latests[idx]
                 idx = products_new.index(latest)
             except ValueError:
+                idx += 1
                 log.info(f"{latest} not in marketplace anymore, skipping")
-                self.latests.popleft()
             except IndexError:
                 log.error(
                     f"Of all {self.DEQUEUE_LEN} latest known products, "
@@ -90,12 +91,19 @@ class UnrealMarketBot:
                 msg += "FREE new content! "
             msg += f"#UnrealEngine #UE5 {package}"
             log.info(msg)
-            self.latests.appendleft(package)
+            try:
+                client.create_tweet(text=msg)
+            except tweepy.errors.TweepyException as e:
+            	log.error(e)
+            	log.error(e.response.headers)
+            	log.error(e.response.content.decode())
+            else:
+                self.latests.appendleft(package)
 
 
 def main():
     log.basicConfig(
-        # filename="unreal_market.log",
+        filename="unreal_market.log",
         format='%(asctime)-15s [%(levelname)-8s]: %(message)s',
         level=log.INFO
     )
