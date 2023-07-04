@@ -4,8 +4,35 @@ import pickle
 
 import requests
 import tweepy
+from discord_webhook import DiscordWebhook
 
 from tokens import *
+
+
+def send_twitter(msg):
+    client = tweepy.Client(
+        consumer_key=consumer_key,
+        consumer_secret=consumer_secret,
+        access_token=access_token,
+        access_token_secret=access_token_secret
+    )
+    try:
+        client.create_tweet(text=msg)
+    except tweepy.errors.HTTPException as e:
+        log.error(e)
+        log.error(e.response.headers)
+        log.error(e.response.content.decode())
+
+
+def send_discord(msg):
+    webhook = DiscordWebhook(url=WEBHOOK_URL, content=msg)
+    webhook.execute()
+
+
+def send_all(msg):
+    log.info(msg)
+    send_discord(msg)
+    send_twitter(msg)
 
 
 class UnrealMarketBot:
@@ -35,12 +62,6 @@ class UnrealMarketBot:
     @_pickled
     def check_for_new_products(self):
         log.debug("Checking for new products")
-        client = tweepy.Client(
-            consumer_key=consumer_key,
-            consumer_secret=consumer_secret,
-            access_token=access_token,
-            access_token_secret=access_token_secret
-        )
 
         # Requesting the Marketplace API for latest products
         products_new = []
@@ -90,15 +111,8 @@ class UnrealMarketBot:
             if package in products_free:
                 msg += "FREE new content! "
             msg += f"#UnrealEngine #UE5 {package}"
-            log.info(msg)
-            try:
-                client.create_tweet(text=msg)
-            except tweepy.errors.TweepyException as e:
-            	log.error(e)
-            	log.error(e.response.headers)
-            	log.error(e.response.content.decode())
-            else:
-                self.latests.appendleft(package)
+            send_all(msg)
+            self.latests.appendleft(package)
 
 
 def main():
