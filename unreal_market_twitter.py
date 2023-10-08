@@ -71,13 +71,12 @@ class UnrealMarketBot:
         j = r.json()
 
         for e in j['data']['elements']:
-            asset_url = f"https://www.unrealengine.com/marketplace/en-US/product/{e['urlSlug']}"
-            products_new.append(asset_url)
+            products_new.append(e)
             if e['priceValue'] == 0:
                 if (attr := e.get("customAttributes", None)) and 'BuyLink' in attr:
                     # Some products are tagged as free, but they're really external products
                     continue
-                products_free.append(asset_url)
+                products_free.append(e)
 
         if len(products_new) == 0:
             raise Exception(f"Failed to fetch new products")
@@ -91,10 +90,13 @@ class UnrealMarketBot:
         while idx < self.DEQUEUE_LEN:
             try:
                 latest = self.latests[idx]
-                idx = products_new.index(latest)
-            except ValueError:
-                idx += 1
-                log.info(f"{latest} not in marketplace anymore, skipping")
+                for i, item in enumerate(products_new):
+                    if latest['id'] == item['id']:
+                        idx = i
+                        break
+                else:
+                    idx += 1
+                    log.info(f"{latest} not in marketplace anymore, skipping")
             except IndexError:
                 log.error(
                     f"Of all {self.DEQUEUE_LEN} latest known products, "
@@ -107,11 +109,19 @@ class UnrealMarketBot:
         products_new = products_new[:idx]
         products_new.reverse()
         for package in products_new:
-            msg = ""
+            asset_url = f"https://www.unrealengine.com/marketplace/en-US/product/{package['urlSlug']}"
+            asset_name = package['title']
+            try:
+                asset_category = package['categories'][0]['name']
+            except (IndexError, KeyError):
+                asset_category = "???"
+            msg = []
             if package in products_free:
-                msg += "FREE new content! "
-            msg += f"#UnrealEngine #UE5 {package}"
-            send_all(msg)
+                msg.append("FREE new content!")
+            msg.append(f"{asset_name} ({asset_category})")
+            msg.append("#UnrealEngine #UE5")
+            msg.append(asset_url)
+            send_all("\n".join(msg))
             self.latests.appendleft(package)
 
 
