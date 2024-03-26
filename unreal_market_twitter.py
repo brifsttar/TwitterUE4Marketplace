@@ -2,7 +2,7 @@ import logging as log
 from collections import deque
 import pickle
 
-import requests
+import tls_client
 import tweepy
 from discord_webhook import DiscordWebhook
 
@@ -67,7 +67,8 @@ class UnrealMarketBot:
         products_new = []
         products_free = []
         payload = {'sortBy': 'effectiveDate', 'count': self.PRODUCT_REQ_COUNT}
-        r = requests.get('https://www.unrealengine.com/marketplace/api/assets', params=payload)
+        session = tls_client.Session(client_identifier="chrome112", random_tls_extension_order=True)
+        r = session.get('https://www.unrealengine.com/marketplace/api/assets', params=payload)
         j = r.json()
 
         for e in j['data']['elements']:
