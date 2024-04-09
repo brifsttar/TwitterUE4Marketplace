@@ -73,13 +73,7 @@ class UnrealMarketBot:
         r = session.get('https://www.unrealengine.com/marketplace/api/assets', params=payload)
         j = r.json()
 
-        for e in j['data']['elements']:
-            products_new.append(e)
-            if e['priceValue'] == 0:
-                if (attr := e.get("customAttributes", None)) and 'BuyLink' in attr:
-                    # Some products are tagged as free, but they're really external products
-                    continue
-                products_free.append(e)
+        products_new = j['data']['elements']
 
         if len(products_new) == 0:
             raise Exception(f"Failed to fetch new products")
@@ -120,8 +114,12 @@ class UnrealMarketBot:
             except (IndexError, KeyError):
                 asset_category = "???"
             msg = []
-            if package in products_free:
-                msg.append("FREE new content!")
+
+            if package['priceValue'] == 0:
+                # Some products are tagged as free, but they're really external products
+                is_ext_prod = (attr := package.get("customAttributes", None)) and 'BuyLink' in attr
+                if not is_ext_prod:
+                    msg.append("FREE new content!")
             msg.append(f"{asset_name} ({asset_category})")
             msg.append("#UnrealEngine #UE5")
             msg.append(asset_url)
