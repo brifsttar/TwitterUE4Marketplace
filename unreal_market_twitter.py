@@ -67,8 +67,12 @@ class UnrealMarketBot:
 
         # Requesting the Marketplace API for latest products
         products_new = []
-        products_free = []
-        payload = {'sortBy': 'effectiveDate', 'count': self.PRODUCT_REQ_COUNT}
+        payload = {
+            'sortBy': 'effectiveDate',
+            'count': self.PRODUCT_REQ_COUNT,
+            # NoAI tag
+            # 'tag[]': '26645'
+        }
         session = tls_client.Session(client_identifier="chrome112", random_tls_extension_order=True)
         r = session.get('https://www.unrealengine.com/marketplace/api/assets', params=payload)
         j = r.json()
@@ -123,7 +127,12 @@ class UnrealMarketBot:
             msg.append(f"{asset_name} ({asset_category})")
             msg.append("#UnrealEngine #UE5")
             msg.append(asset_url)
-            send_all("\n".join(msg))
+
+            msg_txt = "\n".join(msg)
+            if 26732 not in package['tags']:
+                # Filter out "CreatedWithAI" for Twitter
+                send_twitter(msg_txt)
+            send_discord(msg_txt)
             self.latests.appendleft(package)
 
 
