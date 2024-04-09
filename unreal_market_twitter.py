@@ -10,6 +10,7 @@ from tokens import *
 
 
 def send_twitter(msg):
+    log.info(f"Sending {msg} to Twitter")
     client = tweepy.Client(
         consumer_key=consumer_key,
         consumer_secret=consumer_secret,
@@ -25,6 +26,7 @@ def send_twitter(msg):
 
 
 def send_discord(msg):
+    log.info(f"Sending {msg} to Discord")
     webhook = DiscordWebhook(url=WEBHOOK_URL, content=msg)
     webhook.execute()
 
