@@ -105,6 +105,7 @@ class UnrealMarketBot:
                     f"Of all {self.DEQUEUE_LEN} latest known products, "
                     f"none could be found in the {self.PRODUCT_REQ_COUNT} most recent products on the Marketplace"
                 )
+                self.latests.clear()
                 return
             else:
                 break
