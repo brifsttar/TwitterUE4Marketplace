@@ -66,11 +66,11 @@ class UnrealMarketBot:
         log.debug("Checking for new products")
 
         # Requesting the Marketplace API for latest products
-        products_new = []
         payload = {
             'sortBy': 'effectiveDate',
             'count': self.PRODUCT_REQ_COUNT,
             # NoAI tag
+            # Not using it at the moment because it's not widely used yet
             # 'tag[]': '26645'
         }
         session = tls_client.Session(client_identifier="chrome112", random_tls_extension_order=True)
