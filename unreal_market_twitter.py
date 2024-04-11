@@ -9,32 +9,71 @@ from discord_webhook import DiscordWebhook
 from tokens import *
 
 
-def send_twitter(msg):
-    log.info(f"Sending {msg} to Twitter")
+def send_twitter(product):
+    if 26732 in product['tags']:
+        # Filter out "CreatedWithAI" for Twitter
+        return
+
+    asset_url = f"https://www.unrealengine.com/marketplace/en-US/product/{product['urlSlug']}"
+    asset_name = product['title']
+    try:
+        asset_category = product['categories'][0]['name']
+    except (IndexError, KeyError):
+        asset_category = "???"
+    msg = []
+
+    if product['priceValue'] == 0:
+        # Some products are tagged as free, but they're really external products
+        is_ext_prod = (attr := product.get("customAttributes", None)) and 'BuyLink' in attr
+        if not is_ext_prod:
+            msg.append("FREE new content!")
+    msg.append(f"{asset_name} ({asset_category})")
+    msg.append("#UnrealEngine #UE5")
+    msg.append(asset_url)
+    msg_txt = "\n".join(msg)
+
     client = tweepy.Client(
         consumer_key=consumer_key,
         consumer_secret=consumer_secret,
         access_token=access_token,
         access_token_secret=access_token_secret
     )
+
+    log.info(f"Sending {msg_txt} to Twitter")
     try:
-        client.create_tweet(text=msg)
+        client.create_tweet(text=msg_txt)
     except tweepy.errors.HTTPException as e:
         log.error(e)
         log.error(e.response.headers)
         log.error(e.response.content.decode())
 
 
-def send_discord(msg):
+def send_discord(product):
+    asset_url = f"https://www.unrealengine.com/marketplace/en-US/product/{product['urlSlug']}"
+    asset_name = product['title']
+    try:
+        asset_category = product['categories'][0]['name']
+    except (IndexError, KeyError):
+        asset_category = "???"
+    msg = []
+
+    if product['priceValue'] == 0:
+        # Some products are tagged as free, but they're really external products
+        is_ext_prod = (attr := product.get("customAttributes", None)) and 'BuyLink' in attr
+        if not is_ext_prod:
+            msg.append("FREE new content!")
+    msg.append(f"{asset_name} ({asset_category})")
+    msg.append(asset_url)
+
+    msg_txt = "\n".join(msg)
     log.info(f"Sending {msg} to Discord")
-    webhook = DiscordWebhook(url=WEBHOOK_URL, content=msg)
+    webhook = DiscordWebhook(url=WEBHOOK_URL, content=msg_txt)
     webhook.execute()
 
 
-def send_all(msg):
-    log.info(msg)
-    send_discord(msg)
-    send_twitter(msg)
+def send_all(product):
+    send_discord(product)
+    send_twitter(product)
 
 
 class UnrealMarketBot:
@@ -110,30 +149,9 @@ class UnrealMarketBot:
 
         products_new = products_new[:idx]
         products_new.reverse()
-        for package in products_new:
-            asset_url = f"https://www.unrealengine.com/marketplace/en-US/product/{package['urlSlug']}"
-            asset_name = package['title']
-            try:
-                asset_category = package['categories'][0]['name']
-            except (IndexError, KeyError):
-                asset_category = "???"
-            msg = []
-
-            if package['priceValue'] == 0:
-                # Some products are tagged as free, but they're really external products
-                is_ext_prod = (attr := package.get("customAttributes", None)) and 'BuyLink' in attr
-                if not is_ext_prod:
-                    msg.append("FREE new content!")
-            msg.append(f"{asset_name} ({asset_category})")
-            msg.append("#UnrealEngine #UE5")
-            msg.append(asset_url)
-
-            msg_txt = "\n".join(msg)
-            if 26732 not in package['tags']:
-                # Filter out "CreatedWithAI" for Twitter
-                send_twitter(msg_txt)
-            send_discord(msg_txt)
-            self.latests.appendleft(package)
+        for product in products_new:
+            send_all(product)
+            self.latests.appendleft(product)
 
 
 def main():
