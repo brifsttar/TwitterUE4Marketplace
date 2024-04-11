@@ -4,6 +4,7 @@ import pickle
 
 import tls_client
 import tweepy
+import requests
 from discord_webhook import DiscordWebhook
 
 from tokens import *
@@ -68,6 +69,10 @@ def send_discord(product):
     msg_txt = "\n".join(msg)
     log.info(f"Sending {msg} to Discord")
     webhook = DiscordWebhook(url=WEBHOOK_URL, content=msg_txt)
+    if 26732 not in product['tags']:
+        image_url = product['featured']
+        img = requests.get(image_url, stream=True)
+        webhook.add_file(file=img.raw, filename="featured.png")
     webhook.execute()
 
 
