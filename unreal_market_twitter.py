@@ -1,6 +1,7 @@
 import logging as log
 from collections import deque
 import pickle
+from json.decoder import JSONDecodeError
 
 import tls_client
 import tweepy
@@ -124,7 +125,17 @@ class UnrealMarketBot:
         }
         session = tls_client.Session(client_identifier="chrome112", random_tls_extension_order=True)
         r = session.get('https://marketplace-website-node-launcher-prod.ol.epicgames.com/ue/marketplace/api/assets', params=payload)
-        j = r.json()
+        if r.status_code != 200:
+            log.error(f"Failed to fetch Marketplace, error {r.status_code}")
+            return
+        try:
+            j = r.json()
+        except JSONDecodeError as e:
+            log.info(r.content)
+            log.info(r.status_code)
+            log.info(r.headers)
+            log.exception(e)
+            return
 
         products_new = j['data']['elements']
 
