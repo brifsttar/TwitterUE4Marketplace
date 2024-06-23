@@ -64,15 +64,20 @@ def send_discord(product):
         if not is_ext_prod:
             msg.append("FREE new content!")
     msg.append(f"{asset_name} ({asset_category})")
-    msg.append(asset_url)
+
+    # Hide default link card?
+    no_card = False
+    # CreatedWithAI tag
+    no_card |= 26732 in product['tags']
+    # "Music" category
+    no_card |= 'music' in product['categories'][0]['path']
+
+    # Use of "<url>" to hide default card
+    msg.append(asset_url if not no_card else f"<{asset_url}>")
 
     msg_txt = "\n".join(msg)
     log.info(f"Sending {msg} to Discord")
     webhook = DiscordWebhook(url=WEBHOOK_URL, content=msg_txt)
-    if 26732 not in product['tags']:
-        image_url = product['featured']
-        img = requests.get(image_url, stream=True)
-        webhook.add_file(file=img.raw, filename="featured.png")
     webhook.execute()
 
 
