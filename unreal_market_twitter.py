@@ -123,7 +123,7 @@ class UnrealMarketBot:
             # 'tag[]': '26645'
         }
         session = tls_client.Session(client_identifier="chrome112", random_tls_extension_order=True)
-        r = session.get('https://www.unrealengine.com/marketplace/api/assets', params=payload)
+        r = session.get('https://marketplace-website-node-launcher-prod.ol.epicgames.com/ue/marketplace/api/assets', params=payload)
         j = r.json()
 
         products_new = j['data']['elements']
