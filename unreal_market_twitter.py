@@ -169,7 +169,7 @@ def main():
         u = UnrealMarketBot()
         u.check_for_new_products()
     except Exception as e:
-        log.error(e)
+        log.exception(e)
 
 
 if __name__ == '__main__':
