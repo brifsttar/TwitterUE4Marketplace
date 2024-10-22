@@ -2,6 +2,7 @@ import logging as log
 from collections import deque
 import pickle
 from json.decoder import JSONDecodeError
+import re
 
 import tls_client
 import tweepy
@@ -12,23 +13,17 @@ from tokens import *
 
 
 def send_twitter(product):
-    if 26732 in product['tags']:
-        # Filter out "CreatedWithAI" for Twitter
-        return
-
-    asset_url = f"https://www.unrealengine.com/marketplace/en-US/product/{product['urlSlug']}"
+    asset_url = f"https://www.fab.com/listings/{product['uid']}"
     asset_name = product['title']
     try:
-        asset_category = product['categories'][0]['name']
+        asset_category = product['category']['path']
+        asset_category = "/".join([x.capitalize() for x in re.split('-|/', asset_category)])
     except (IndexError, KeyError):
         asset_category = "???"
     msg = []
 
-    if product['priceValue'] == 0:
-        # Some products are tagged as free, but they're really external products
-        is_ext_prod = (attr := product.get("customAttributes", None)) and 'BuyLink' in attr
-        if not is_ext_prod:
-            msg.append("FREE new content!")
+    if product['isFree']:
+        msg.append("FREE new content!")
     msg.append(f"{asset_name} ({asset_category})")
     msg.append("#UnrealEngine #UE5")
     msg.append(asset_url)
@@ -51,34 +46,34 @@ def send_twitter(product):
 
 
 def send_discord(product):
-    asset_url = f"https://www.unrealengine.com/marketplace/en-US/product/{product['urlSlug']}"
+    asset_url = f"https://www.fab.com/listings/{product['uid']}"
     asset_name = product['title']
     try:
-        asset_category = product['categories'][0]['name']
+        asset_category = product['category']['path']
+        asset_category = "/".join([x.capitalize() for x in re.split('-|/', asset_category)])
     except (IndexError, KeyError):
         asset_category = "???"
     msg = []
 
-    if product['priceValue'] == 0:
-        # Some products are tagged as free, but they're really external products
-        is_ext_prod = (attr := product.get("customAttributes", None)) and 'BuyLink' in attr
-        if not is_ext_prod:
-            msg.append("FREE new content!")
+    if product['isFree']:
+        msg.append("FREE new content!")
     msg.append(f"{asset_name} ({asset_category})")
 
     # Hide default link card?
     no_card = False
-    # CreatedWithAI tag
-    no_card |= 26732 in product['tags']
     # "Music" category
-    no_card |= 'music' in product['categories'][0]['path']
+    no_card |= 'music' in asset_category.lower()
 
     # Use of "<url>" to hide default card
-    msg.append(asset_url if not no_card else f"<{asset_url}>")
+    msg.append(f"<{asset_url}>")
 
     msg_txt = "\n".join(msg)
-    log.info(f"Sending {msg} to Discord")
+    log.info(f"Sending {msg_txt} to Discord")
     webhook = DiscordWebhook(url=WEBHOOK_URL, content=msg_txt)
+    if not no_card:
+        image_url = product['thumbnails'][0]['mediaUrl']
+        img = requests.get(image_url, stream=True)
+        webhook.add_file(file=img.raw, filename="featured.png")
     webhook.execute()
 
 
@@ -117,14 +112,13 @@ class UnrealMarketBot:
 
         # Requesting the Marketplace API for latest products
         payload = {
-            'sortBy': 'effectiveDate',
-            'count': self.PRODUCT_REQ_COUNT,
-            # NoAI tag
-            # Not using it at the moment because it's not widely used yet
-            # 'tag[]': '26645'
+            'channels': 'unreal-engine',
+            'is_ai_generated': 0,
+            'sort_by': '-createdAt',
+            'currency': 'USD',
         }
         session = tls_client.Session(client_identifier="chrome112", random_tls_extension_order=True)
-        r = session.get('https://marketplace-website-node-launcher-prod.ol.epicgames.com/ue/marketplace/api/assets', params=payload)
+        r = session.get('https://www.fab.com/i/listings/search', params=payload)
         if r.status_code != 200:
             log.error(f"Failed to fetch Marketplace, error {r.status_code}")
             return
@@ -137,7 +131,7 @@ class UnrealMarketBot:
             log.exception(e)
             return
 
-        products_new = j['data']['elements']
+        products_new = j['results']
 
         if len(products_new) == 0:
             raise Exception(f"Failed to fetch new products")
@@ -152,7 +146,7 @@ class UnrealMarketBot:
             try:
                 latest = self.latests[idx]
                 for i, item in enumerate(products_new):
-                    if latest['id'] == item['id']:
+                    if latest['uid'] == item['uid']:
                         idx = i
                         break
                 else:
