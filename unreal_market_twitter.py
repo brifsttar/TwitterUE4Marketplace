@@ -4,10 +4,9 @@ import pickle
 from json.decoder import JSONDecodeError
 import re
 
-import tls_client
 import tweepy
-import requests
 from discord_webhook import DiscordWebhook
+from curl_cffi import requests
 
 from tokens import *
 
@@ -72,8 +71,8 @@ def send_discord(product):
     webhook = DiscordWebhook(url=WEBHOOK_URL, content=msg_txt)
     if not no_card:
         image_url = product['thumbnails'][0]['mediaUrl']
-        img = requests.get(image_url, stream=True)
-        webhook.add_file(file=img.raw, filename="featured.png")
+        img = requests.get(image_url, impersonate="chrome101")
+        webhook.add_file(file=img.content, filename="featured.png")
     webhook.execute()
 
 
@@ -117,8 +116,7 @@ class UnrealMarketBot:
             'sort_by': '-publishedAt',
             'currency': 'USD',
         }
-        session = tls_client.Session(client_identifier="chrome112", random_tls_extension_order=True)
-        r = session.get('https://www.fab.com/i/listings/search', params=payload)
+        r = requests.get('https://www.fab.com/i/listings/search', params=payload, impersonate="chrome101")
         if r.status_code != 200:
             log.error(f"Failed to fetch Marketplace, error {r.status_code}")
             return
