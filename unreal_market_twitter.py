@@ -114,7 +114,7 @@ class UnrealMarketBot:
         payload = {
             'channels': 'unreal-engine',
             'is_ai_generated': 0,
-            'sort_by': '-createdAt',
+            'sort_by': '-publishedAt',
             'currency': 'USD',
         }
         session = tls_client.Session(client_identifier="chrome112", random_tls_extension_order=True)
