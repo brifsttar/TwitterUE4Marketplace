@@ -45,6 +45,7 @@ def send_twitter(product):
 
 
 def send_discord(product):
+    url = WEBHOOK_URL_ALL
     asset_url = f"https://www.fab.com/listings/{product['uid']}"
     asset_name = product['title']
     try:
@@ -55,7 +56,7 @@ def send_discord(product):
     msg = []
 
     if product['isFree']:
-        msg.append("FREE new content!")
+        url = WEBHOOK_URL_FREE
     msg.append(f"{asset_name} ({asset_category})")
 
     # Hide default link card?
@@ -68,7 +69,7 @@ def send_discord(product):
 
     msg_txt = "\n".join(msg)
     log.info(f"Sending {msg_txt} to Discord")
-    webhook = DiscordWebhook(url=WEBHOOK_URL, content=msg_txt)
+    webhook = DiscordWebhook(url=url, content=msg_txt)
     if not no_card:
         image_url = product['thumbnails'][0]['mediaUrl']
         img = requests.get(image_url, impersonate="chrome101")
