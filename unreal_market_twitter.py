@@ -79,7 +79,7 @@ def send_discord(product):
 
 def send_all(product):
     send_discord(product)
-    send_twitter(product)
+    # send_twitter(product)
 
 
 class UnrealMarketBot:
