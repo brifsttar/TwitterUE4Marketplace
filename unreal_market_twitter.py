@@ -55,7 +55,9 @@ def send_discord(product):
         asset_category = "???"
     msg = []
 
-    if product['isFree']:
+    is_free = product['isFree'] or product['startingPrice']['price'] == 0.
+
+    if is_free:
         url = WEBHOOK_URL_FREE
     msg.append(f"{asset_name} ({asset_category})")
 
