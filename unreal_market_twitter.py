@@ -61,6 +61,8 @@ def send_discord(product):
         url = WEBHOOK_URL_FREE
     msg.append(f"{asset_name} ({asset_category})")
 
+    if 'music' in asset_category.lower():
+        return
     # Hide default link card?
     no_card = False
     # "Music" category
