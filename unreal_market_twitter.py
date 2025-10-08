@@ -54,12 +54,14 @@ def send_all(product):
 class UnrealMarketBot:
 
     LATEST_PRODUCT_FILE = 'latest.pickle'
+    FREE_PRODUCT_FILE = 'free.pickle'
     DEQUEUE_LEN = 20
     PRODUCT_REQ_COUNT = 100
 
     def __init__(self):
         # Circular buffer with the latest known products, used to check Marketplace API and discover new releases
         self.latests = None
+        self.freebies = []
 
     def _pickled(func):
         """Decorator to load/dump pickle data around a function call"""
@@ -136,6 +138,44 @@ class UnrealMarketBot:
             send_all(product)
             self.latests.appendleft(product)
 
+    def check_free_limited_time(self):
+        log.debug("Checking for new free for limited time products")
+        try:
+            with open(self.FREE_PRODUCT_FILE, 'rb') as f:
+                self.freebies = pickle.load(f)
+        except FileNotFoundError:
+            log.warning(f"{self.FREE_PRODUCT_FILE} not found, initializing empty list")
+
+        r = requests.get('https://www.fab.com/i/blades/free_content_blade', impersonate="chrome101")
+        if r.status_code != 200:
+            log.error(f"Failed to fetch Marketplace, error {r.status_code}")
+            return
+        try:
+            j = r.json()
+        except JSONDecodeError as e:
+            log.info(r.content)
+            log.info(r.status_code)
+            log.info(r.headers)
+            log.exception(e)
+            return
+
+        products = j['tiles']
+        for product in products:
+            if product['uid'] in self.freebies:
+                continue
+            listing = product['listing']
+            msg = f"# **⏱️ {j['title']}**\n## {listing['title']}\nhttps://www.fab.com/listings/{product['uid']}"
+            log.info(f"Sending {msg.encode('ascii', 'ignore')} to Discord")
+            webhook = DiscordWebhook(url=WEBHOOK_URL_FREE, content=msg)
+            image_url = listing['thumbnails'][0]['mediaUrl']
+            img = requests.get(image_url, impersonate="chrome101")
+            webhook.add_file(file=img.content, filename="featured.png")
+            webhook.execute()
+
+        self.freebies = [p['uid'] for p in products]
+        with open(self.FREE_PRODUCT_FILE, 'wb') as f:
+            pickle.dump(self.freebies, f, pickle.HIGHEST_PROTOCOL)
+
 
 def main():
     log.basicConfig(
@@ -146,6 +186,7 @@ def main():
     try:
         u = UnrealMarketBot()
         u.check_for_new_products()
+        u.check_free_limited_time()
     except Exception as e:
         log.exception(e)
 
