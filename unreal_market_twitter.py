@@ -57,7 +57,7 @@ class UnrealMarketBot:
     DEQUEUE_LEN = 20
     PRODUCT_REQ_COUNT = 100
 
-    def __int__(self):
+    def __init__(self):
         # Circular buffer with the latest known products, used to check Marketplace API and discover new releases
         self.latests = None
 
