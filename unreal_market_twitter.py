@@ -4,44 +4,10 @@ import pickle
 from json.decoder import JSONDecodeError
 import re
 
-import tweepy
 from discord_webhook import DiscordWebhook
 from curl_cffi import requests
 
 from tokens import *
-
-
-def send_twitter(product):
-    asset_url = f"https://www.fab.com/listings/{product['uid']}"
-    asset_name = product['title']
-    try:
-        asset_category = product['category']['path']
-        asset_category = "/".join([x.capitalize() for x in re.split('-|/', asset_category)])
-    except (IndexError, KeyError):
-        asset_category = "???"
-    msg = []
-
-    if product['isFree']:
-        msg.append("FREE new content!")
-    msg.append(f"{asset_name} ({asset_category})")
-    msg.append("#UnrealEngine #UE5")
-    msg.append(asset_url)
-    msg_txt = "\n".join(msg)
-
-    client = tweepy.Client(
-        consumer_key=consumer_key,
-        consumer_secret=consumer_secret,
-        access_token=access_token,
-        access_token_secret=access_token_secret
-    )
-
-    log.info(f"Sending {msg_txt} to Twitter")
-    try:
-        client.create_tweet(text=msg_txt)
-    except tweepy.errors.HTTPException as e:
-        log.error(e)
-        log.error(e.response.headers)
-        log.error(e.response.content.decode())
 
 
 def send_discord(product):
@@ -83,7 +49,6 @@ def send_discord(product):
 
 def send_all(product):
     send_discord(product)
-    # send_twitter(product)
 
 
 class UnrealMarketBot:
