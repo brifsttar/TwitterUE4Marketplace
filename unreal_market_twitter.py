@@ -85,7 +85,7 @@ class UnrealMarketBot:
         payload = {
             'channels': 'unreal-engine',
             'is_ai_generated': 0,
-            'sort_by': '-publishedAt',
+            'sort_by': '-firstPublishedAt',
             'currency': 'USD',
         }
         r = requests.get('https://www.fab.com/i/listings/search', params=payload, impersonate="chrome101")
