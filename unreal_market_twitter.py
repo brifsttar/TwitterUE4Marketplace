@@ -167,7 +167,7 @@ class UnrealMarketBot:
             if product['uid'] in self.freebies:
                 continue
             listing = product['listing']
-            msg = f"# **⏱️ {j['title']}**\n## {listing['title']}\nhttps://www.fab.com/listings/{product['uid']}"
+            msg = f"# **⏱️ {j['title']}**\n## {listing['title']}\nhttps://www.fab.com/listings/{listing['uid']}"
             log.info(f"Sending {msg.encode('ascii', 'ignore')} to Discord")
             webhook = DiscordWebhook(url=WEBHOOK_URL_FREE, content=msg)
             image_url = listing['thumbnails'][0]['mediaUrl']
