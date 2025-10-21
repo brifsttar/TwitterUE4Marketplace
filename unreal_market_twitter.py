@@ -160,6 +160,9 @@ class UnrealMarketBot:
             return
 
         products = j['tiles']
+        if len(products) == 0:
+            log.error(f"Received no free product, returning")
+            return
         for product in products:
             if product['uid'] in self.freebies:
                 continue
