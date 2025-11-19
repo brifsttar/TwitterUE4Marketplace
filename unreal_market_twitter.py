@@ -164,9 +164,9 @@ class UnrealMarketBot:
             log.error(f"Received no free product, returning")
             return
         for product in products:
-            if product['uid'] in self.freebies:
-                continue
             listing = product['listing']
+            if listing['uid'] in self.freebies:
+                continue
             msg = f"# **⏱️ {j['title']}**\n## {listing['title']}\n<https://www.fab.com/listings/{listing['uid']}>"
             log.info(f"Sending {msg.encode('ascii', 'ignore')} to Discord")
             webhook = DiscordWebhook(url=WEBHOOK_URL_FREE, content=msg)
@@ -175,7 +175,7 @@ class UnrealMarketBot:
             webhook.add_file(file=img.content, filename="featured.png")
             webhook.execute()
 
-        self.freebies = [p['uid'] for p in products]
+        self.freebies = [p['listing']['uid'] for p in products]
         with open(self.FREE_PRODUCT_FILE, 'wb') as f:
             pickle.dump(self.freebies, f, pickle.HIGHEST_PROTOCOL)
 
