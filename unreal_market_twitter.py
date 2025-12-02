@@ -88,7 +88,7 @@ class UnrealMarketBot:
             'sort_by': '-firstPublishedAt',
             'currency': 'USD',
         }
-        r = requests.get('https://www.fab.com/i/listings/search', params=payload, impersonate="chrome101")
+        r = requests.get('https://www.fab.com/i/listings/search', params=payload, impersonate="chrome")
         if r.status_code != 200:
             log.error(f"Failed to fetch Marketplace, error {r.status_code}")
             return
@@ -146,7 +146,7 @@ class UnrealMarketBot:
         except FileNotFoundError:
             log.warning(f"{self.FREE_PRODUCT_FILE} not found, initializing empty list")
 
-        r = requests.get('https://www.fab.com/i/blades/free_content_blade', impersonate="chrome101")
+        r = requests.get('https://www.fab.com/i/blades/free_content_blade', impersonate="chrome")
         if r.status_code != 200:
             log.error(f"Failed to fetch Marketplace, error {r.status_code}")
             return
