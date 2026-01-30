@@ -28,11 +28,14 @@ def send_discord(product):
     msg.append(f"{asset_name} ({asset_category})")
 
     if 'music' in asset_category.lower():
+        log.info(f"Skipping {asset_name} ({asset_url}), reason: music")
         return
     # Hide default link card?
     no_card = False
-    # "Music" category
-    no_card |= 'music' in asset_category.lower()
+
+    if product['user']['uid'] == '909a6f2f-8f96-403d-bf00-293179c56025':
+        log.info(f"Skipping {asset_name} ({asset_url}), reason: Anydraftscgi")
+        return
 
     # Use of "<url>" to hide default card
     msg.append(f"<{asset_url}>")
