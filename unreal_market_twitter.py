@@ -33,8 +33,12 @@ def send_discord(product):
     # Hide default link card?
     no_card = False
 
-    if product['user']['uid'] == '909a6f2f-8f96-403d-bf00-293179c56025':
-        log.info(f"Skipping {asset_name} ({asset_url}), reason: Anydraftscgi")
+    blacklist = [
+        '909a6f2f-8f96-403d-bf00-293179c56025', # Anydraftscgi  (banned?)
+        'b9f9f100-f1ce-44ca-a025-cc2f76e84a2a', # https://www.fab.com/sellers/Daz3D
+    ]
+    if product['user']['uid'] in blacklist :
+        log.info(f"Skipping {asset_name} ({asset_url}), reason: blacklisted creator")
         return
 
     # Use of "<url>" to hide default card
